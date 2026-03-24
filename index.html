@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIニュース アーカイブ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #f5ede0;
+    --surface: #fff8f0;
+    --surface2: #fdf3e7;
+    --border: #ddc9b0;
+    --accent: #8b5e3c;
+    --accent2: #c8873a;
+    --text: #2c1a0e;
+    --text-muted: #7a6451;
+    --star: #c8873a;
+    --hot: #b84a2a;
+    --today: #5a8a3c;
+    --sidebar-w: 200px;
+    --header-bg: #3d2010;
+    --sidebar-bg: #2c1a0e;
+    --sidebar-text: #e8d5be;
+    --sidebar-muted: #9a7a60;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', 'Inter', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ====== ヘッダー ====== */
+  .header {
+    background: linear-gradient(135deg, #3d2010 0%, #5c3015 60%, #7a4020 100%);
+    padding: 18px 28px;
+    border-bottom: 2px solid #c8873a;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f5ddb8;
+    white-space: nowrap;
+    letter-spacing: -0.3px;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: #c8a880;
+  }
+
+  /* ====== レイアウト ====== */
+  .layout {
+    display: flex;
+    flex: 1;
+  }
+
+  /* ====== サイドバー ====== */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: #2c1a0e;
+    border-right: 2px solid #5c3015;
+    position: sticky;
+    top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+    padding: 16px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #5c3015 transparent;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9a7a60;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 0 16px 10px;
+  }
+
+  .date-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    color: #c8a880;
+    text-decoration: none;
+    transition: all 0.15s;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+
+  .date-link:hover {
+    background: rgba(200,135,58,0.15);
+    color: #f5ddb8;
+    border-left-color: #c8873a;
+  }
+
+  .date-link.active {
+    background: rgba(200,135,58,0.2);
+    color: #f5c878;
+    border-left-color: #c8873a;
+    font-weight: 600;
+  }
+
+  .date-link .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #5c3015;
+    flex-shrink: 0;
+  }
+
+  .date-link.active .dot { background: #c8873a; }
+
+  .date-link .cnt {
+    margin-left: auto;
+    font-size: 10px;
+    background: rgba(92,48,21,0.4);
+    border-radius: 10px;
+    padding: 1px 6px;
+    border: 1px solid #5c3015;
+    color: #c8a880;
+  }
+
+  /* ====== メインコンテンツ ====== */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 32px 60px;
+  }
+
+  /* ====== 日付セクション ====== */
+  .date-section {
+    margin-bottom: 56px;
+    scroll-margin-top: 80px;
+  }
+
+  .date-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .date-heading h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #3d2010;
+  }
+
+  .date-range-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: #eedcc8;
+    border: 1px solid #ddc9b0;
+    border-radius: 20px;
+    padding: 3px 10px;
+  }
+
+  /* サマリーハイライト */
+  .highlight-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .hl-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text);
+  }
+
+  .hl-item.top { border-color: #8b5e3c; background: rgba(139,94,60,0.08); }
+  .hl-item .stars { color: var(--star); font-size: 11px; }
+  .hl-item .acc { color: var(--text-muted); font-size: 11px; }
+
+  /* アカウントグリッド */
+  .account-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 18px;
+  }
+
+  .account-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .account-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .account-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+
+  .account-info h3 { font-size: 14px; font-weight: 700; }
+  .account-info a { font-size: 11px; color: var(--text-muted); text-decoration: none; }
+  .account-info a:hover { color: var(--accent); }
+
+  .cnt-badge {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ニュースアイテム */
+  .news-list { padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+
+  .news-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 13px;
+    transition: all 0.18s;
+    border-left: 3px solid transparent;
+  }
+
+  .news-item:hover {
+    border-color: #8b5e3c;
+    transform: translateY(-1px);
+    background: rgba(139,94,60,0.05);
+  }
+
+  .news-item.s3 { border-left-color: #b84a2a; }
+  .news-item.s2 { border-left-color: #c8873a; }
+  .news-item.s1 { border-left-color: #5a8a3c; }
+
+  .news-title {
+    font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 5px;
+  }
+
+  .news-title a { color: #2c1a0e; text-decoration: none; }
+  .news-title a:hover { color: #8b5e3c; text-decoration: underline; }
+
+  .news-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 7px; }
+
+  .news-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .badge {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 8px; font-weight: 600;
+  }
+
+  .b-date { background: #eedcc8; color: #7a6451; border: 1px solid #ddc9b0; }
+  .b-s3 { background: rgba(184,74,42,0.12); color: #b84a2a; }
+  .b-s2 { background: rgba(200,135,58,0.15); color: #8b5e3c; }
+  .b-s1 { background: rgba(90,138,60,0.12); color: #3d6e20; }
+  .b-new { background: rgba(90,138,60,0.12); color: #3d6e20; }
+
+  /* アカウントカラー */
+  .col-t .account-icon  { background: rgba(139,94,60,0.15); }
+  .col-m .account-icon  { background: rgba(184,74,42,0.15); }
+  .col-s .account-icon  { background: rgba(90,138,60,0.15); }
+  .col-h .account-icon  { background: rgba(200,135,58,0.15); }
+  .col-r .account-icon  { background: rgba(92,48,21,0.12); }
+
+  /* フッター */
+  .footer {
+    text-align: center;
+    padding: 18px;
+    color: var(--text-muted);
+    font-size: 11px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* スクロールバー */
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: #ddc9b0; border-radius: 3px; }
+
+  @media (max-width: 800px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .account-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📡 AIニュース アーカイブ</h1>
+  <div class="header-sub">ウォッチリスト巡回ログ｜累積保存版</div>
+</div>
+
+<div class="layout">
+
+  <!-- サイドバー -->
+  <nav class="sidebar">
+    <div class="sidebar-label">巡回日</div>
+    <!-- ↓ 日付リンクは追加していく -->
+    <a class="date-link active" href="#d20260324">
+      <span class="dot"></span>3/24 <span class="cnt">34件</span>
+    </a>
+    <!-- 次回巡回時にここに追加 -->
+  </nav>
+
+  <div class="main">
+
+    <!-- ======================================
+         3/24 セクション （9日分まとめ 3/15〜3/24）
+         ====================================== -->
+    <section class="date-section" id="d20260324">
+      <div class="date-heading">
+        <h2>2026-03-24</h2>
+        <span class="date-range-badge">9日分まとめ（3/15〜3/24）</span>
+      </div>
+
+      <div class="highlight-bar">
+        <div class="hl-item top"><span class="stars">⭐⭐⭐</span>Claude Computer Use がmacOSで一般公開<span class="acc">@masahirochaen</span></div>
+        <div class="hl-item top"><span class="stars">⭐⭐⭐</span>Antigravity制限対策：二刀流<span class="acc">@ritsuto / @HimazinProducer</span></div>
+        <div class="hl-item top"><span class="stars">⭐⭐⭐</span>コード経験ゼロ税理士がClaude Codeで60名管理<span class="acc">@tetumemo</span></div>
+        <div class="hl-item"><span class="stars">⭐⭐</span>Claude Code Skills 設計指針（翻訳版）<span class="acc">@Shuhei_Ohno</span></div>
+        <div class="hl-item"><span class="stars">⭐⭐</span>AI時代の価値は「編集・ディレクション」<span class="acc">@HimazinProducer</span></div>
+      </div>
+
+      <div class="account-grid">
+
+        <!-- tetumemo -->
+        <div class="account-col col-t">
+          <div class="account-header">
+            <div class="account-icon">🧮</div>
+            <div class="account-info">
+              <h3>テツメモ</h3>
+              <a href="https://x.com/tetumemo" target="_blank">@tetumemo</a>
+            </div>
+            <div class="cnt-badge">8件</div>
+          </div>
+          <div class="news-list">
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2035908841087660210" target="_blank">コード経験ゼロの税理士がClaude Codeで60名を一人で管理</a></div>
+              <div class="news-desc">監査・経理出身の税理士がClaude Codeを活用。CLAUDE.mdの指示書ファイルが鍵と強調。</div>
+              <div class="news-footer"><span class="badge b-date">3/23</span><span class="badge b-s2">⭐⭐ 注目</span></div>
+            </div>
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2033491969910227315" target="_blank">Claudeで仮想広報チーム（32名）を構築</a></div>
+              <div class="news-desc">8部門32名の専門家集団をPC上に設計。「万能AI」ではなく「専門家チーム」として動かす発想の転換。</div>
+              <div class="news-footer"><span class="badge b-date">3/16</span><span class="badge b-s2">⭐⭐ 注目</span></div>
+            </div>
+            <div class="news-item s1">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2035701240794108197" target="_blank">AIスキルの設計思想：Google vs OpenAI の違い</a></div>
+              <div class="news-desc">Googleは専門作業の自動化、OpenAIは汎用AI。Google Workspace CLIのSkills89種調査も。</div>
+              <div class="news-footer"><span class="badge b-date">3/22</span><span class="badge b-s1">⭐ 注目</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2034047370816852163" target="_blank">MFクラウド×AIで確定申告を1日で完遂</a></div>
+              <div class="news-desc">「前月までの準備×AIの使い所を分離」で爆速化した実例。</div>
+              <div class="news-footer"><span class="badge b-date">3/17</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2035717937710137712" target="_blank">非エンジニア向けClaude Code初期設定テンプレ公開</a></div>
+              <div class="news-desc">「PC内で動くアシスタント」としての設定方法を解説。テンプレートも配布。</div>
+              <div class="news-footer"><span class="badge b-date">3/22</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2032659982517473658" target="_blank">「AIに書かせる」vs「AIを使って書く」の分岐点</a></div>
+              <div class="news-desc">収益「億 vs ゼロ」に分かれる理由をニュースレター3年分のデータで解説。</div>
+              <div class="news-footer"><span class="badge b-date">3/14</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2034815253935268214" target="_blank">短尺動画 vs ポッドキャストの戦略論</a></div>
+              <div class="news-desc">単発の面白さではなく「アカウント全体のストーリー設計」が重要という視点。</div>
+              <div class="news-footer"><span class="badge b-date">3/20</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/tetumemo/status/2036160940727738617" target="_blank">Claude公式ユースケース集の紹介</a></div>
+              <div class="news-desc">「AIの使い方がわからない」層向けにAnthropicの公式事例をまとめて紹介。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-new">本日</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- masahirochaen -->
+        <div class="account-col col-m">
+          <div class="account-header">
+            <div class="account-icon">🚀</div>
+            <div class="account-info">
+              <h3>masahirochaen</h3>
+              <a href="https://x.com/masahirochaen" target="_blank">@masahirochaen</a>
+            </div>
+            <div class="cnt-badge">8件 🔥</div>
+          </div>
+          <div class="news-list">
+            <div class="news-item s3">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2036251721488539968" target="_blank">🆕 Claude Computer Use がmacOSで一般公開</a></div>
+              <div class="news-desc">Pro/Max向けにPC上のアプリ・ブラウザ操作を自律実行する機能をリリース。「チャット」から「作業代行」への大きな一歩。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-s3">⭐⭐⭐ 最注目</span><span class="badge b-new">本日</span></div>
+            </div>
+            <div class="news-item s1">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2034400202912678384" target="_blank">Anthropic Claude 認定アーキテクト試験の全貌</a></div>
+              <div class="news-desc">Anthropicの公式認定資格の詳細。AI活用の「格付け」が始まってきた。</div>
+              <div class="news-footer"><span class="badge b-date">3/19</span><span class="badge b-s1">⭐ 注目</span></div>
+            </div>
+            <div class="news-item s1">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2035953738159186107" target="_blank">Claude Code × Notta × Notion 議事録全自動フロー</a></div>
+              <div class="news-desc">会議からお礼メール作成までを一貫全自動化。実務直結で即応用できる。</div>
+              <div class="news-footer"><span class="badge b-date">3/23</span><span class="badge b-s1">⭐ 注目</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2036200062330487228" target="_blank">1日4時間削減を実現するClaude Cowork設定法</a></div>
+              <div class="news-desc">圧倒的な時短のための具体的な設定とマインドセット。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-new">本日</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2036269501222928831" target="_blank">Dispatch でスマホ仕事を自動化</a></div>
+              <div class="news-desc">Slack通知の要約やカレンダー連携など、モバイルでの生産性向上ツール。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-new">本日</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2036080915429183650" target="_blank">AIニュース：Google Vibe Design / NVIDIA GTC</a></div>
+              <div class="news-desc">FigmaへのGoogle対抗ツール発表やNVIDIAの大型発表など。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-new">本日</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2032963490500194736" target="_blank">AI従業員「Junior」ローンチ（月$2,000〜）</a></div>
+              <div class="news-desc">Slack・メール・電話番号付きで組織に入り、自分でタスクを見つけて動くAI従業員。</div>
+              <div class="news-footer"><span class="badge b-date">3/15</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/masahirochaen/status/2032664263849029953" target="_blank">OpenClaw×Felixで月30万ドルを稼ぐ6ステップ</a></div>
+              <div class="news-desc">AIエージェントに100万ドルビジネスをゼロ人間で構築させた海外事例。</div>
+              <div class="news-footer"><span class="badge b-date">3/14</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shuhei_Ohno -->
+        <div class="account-col col-s">
+          <div class="account-header">
+            <div class="account-icon">🧾</div>
+            <div class="account-info">
+              <h3>大野 修平</h3>
+              <a href="https://x.com/Shuhei_Ohno" target="_blank">@Shuhei_Ohno</a>
+            </div>
+            <div class="cnt-badge">8件</div>
+          </div>
+          <div class="news-list">
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2034150790697521651" target="_blank">Claude Code Skills の設計指針（翻訳・まとめ）</a></div>
+              <div class="news-desc">Claude Code開発チームが示した「Skillsの作り方」を翻訳＋自分の知見を加えてまとめた必読投稿。</div>
+              <div class="news-footer"><span class="badge b-date">3/18</span><span class="badge b-s2">⭐⭐ 必読</span></div>
+            </div>
+            <div class="news-item s1">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2033351939556356107" target="_blank">「AIから自分の仕事を奪わせない」ことがリスク</a></div>
+              <div class="news-desc">AIへの過度な依存ではなく「人間が不要な作業を抱え込むリスク」という逆転の発想。</div>
+              <div class="news-footer"><span class="badge b-date">3/15</span><span class="badge b-s1">⭐ 注目</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2034610459731734889" target="_blank">スキルとスラッシュコマンドの違いを解説</a></div>
+              <div class="news-desc">永続的な「スキル」vs 特定操作を呼び出す「コマンド」の使い分けを明快に整理。</div>
+              <div class="news-footer"><span class="badge b-date">3/19</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2035122392281096368" target="_blank">Claude Code × freee MCP の自動化事例に反響</a></div>
+              <div class="news-desc">畠山氏による実務自動化事例が大反響。税理士業務との親和性が高い。</div>
+              <div class="news-footer"><span class="badge b-date">3/21</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2035347270334661014" target="_blank">/status でモデル確認・/model で切り替える方法</a></div>
+              <div class="news-desc">Claude Codeの基本Tips。「effort」表示の読み方も解説。</div>
+              <div class="news-footer"><span class="badge b-date">3/21</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2035550083509563508" target="_blank">MCP の役割と仕組みをわかりやすく解説</a></div>
+              <div class="news-desc">「Filesystem MCPなしでも動くが、外部連携の共通ルールとして重要」という整理。</div>
+              <div class="news-footer"><span class="badge b-date">3/22</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2035844689618952579" target="_blank">Claude Code スキル機能で業務を大幅効率化</a></div>
+              <div class="news-desc">スキルを覚えさせることで毎回の指示を省略し一貫した出力を実現。</div>
+              <div class="news-footer"><span class="badge b-date">3/23</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/Shuhei_Ohno/status/2032611985620349069" target="_blank">確定申告しながらClaudeに開発させてる</a></div>
+              <div class="news-desc">「Claudeが一瞬で終わってレビューを求めてくるので確定申告が進まない笑」→共感しかない。</div>
+              <div class="news-footer"><span class="badge b-date">3/14</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HimazinProducer -->
+        <div class="account-col col-h">
+          <div class="account-header">
+            <div class="account-icon">⚡</div>
+            <div class="account-info">
+              <h3>テンペ</h3>
+              <a href="https://x.com/HimazinProducer" target="_blank">@HimazinProducer</a>
+            </div>
+            <div class="cnt-badge">4件</div>
+          </div>
+          <div class="news-list">
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/HimazinProducer/status/2034191168167149978" target="_blank">全AIエージェント比較＋真実（保存版）</a></div>
+              <div class="news-desc">Claude Code・Antigravity・Codex・Manus全部触った結論：「どれがいいか」という問いを卒業し、エージェントの本質的な設計思想へ。</div>
+              <div class="news-footer"><span class="badge b-date">3/22</span><span class="badge b-s2">⭐⭐ 保存版</span></div>
+            </div>
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/HimazinProducer/status/2033664896156795375" target="_blank">Antigravityの制限と5つの突破法</a></div>
+              <div class="news-desc">月$200のUltraプランでも発生する制限への具体的対策5つを公開。「1回の指示を濃くする」等の実践的ノウハウ。</div>
+              <div class="news-footer"><span class="badge b-date">3/20</span><span class="badge b-s2">⭐⭐ 注目</span></div>
+            </div>
+            <div class="news-item s1">
+              <div class="news-title"><a href="https://x.com/HimazinProducer/status/2034346857959419918" target="_blank">AI時代の価値は「編集・ディレクション」に集約</a></div>
+              <div class="news-desc">誰でも「作れる」時代において、情報の取捨選択と方向付けが最高単価スキルになるという考察。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-s1">⭐ 注目</span><span class="badge b-new">本日</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/HimazinProducer/status/2034395355199254917" target="_blank">AI試行錯誤用「experiments/」フォルダ活用術</a></div>
+              <div class="news-desc">本番環境を汚さずAIに自由に試行錯誤させるフォルダ構成の実践テクニック。</div>
+              <div class="news-footer"><span class="badge b-date">3/24</span><span class="badge b-new">本日</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ritsuto -->
+        <div class="account-col col-r">
+          <div class="account-header">
+            <div class="account-icon">🎓</div>
+            <div class="account-info">
+              <h3>リツト</h3>
+              <a href="https://x.com/ritsuto_NFT_Vt" target="_blank">@ritsuto_NFT_Vt</a>
+            </div>
+            <div class="cnt-badge">6件</div>
+          </div>
+          <div class="news-list">
+            <div class="news-item s2">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2034195025303847331" target="_blank">Antigravity制限対策：Claude Codeとの「二刀流」推奨</a></div>
+              <div class="news-desc">基本はAntigravity、ターミナル/コード修正はClaude Codeで使い分ける二刀流が効率的。制限が厳しくなった人への具体策。</div>
+              <div class="news-footer"><span class="badge b-date">3/18</span><span class="badge b-s2">⭐⭐ 注目</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2032972785274990935" target="_blank">Antigravity利用上限対策：モデル切り替え術</a></div>
+              <div class="news-desc">上限到達時に軽量モデル（Gemini等）へ一時切り替える運用術。</div>
+              <div class="news-footer"><span class="badge b-date">3/14</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2033520210213482683" target="_blank">Gemini 3.1 Pro (High) 活用でトークン節約</a></div>
+              <div class="news-desc">高品質な成果を出しながら制限を回避するための指示の整理方法。</div>
+              <div class="news-footer"><span class="badge b-date">3/16</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2034551448395239710" target="_blank">大阪で初のリアル作業会開催告知</a></div>
+              <div class="news-desc">3/22（日）大阪で初の対面作業会を発表。</div>
+              <div class="news-footer"><span class="badge b-date">3/19</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2034983547422089614" target="_blank">大阪遠征＋AI時代にリアルなつながりが再定義される</a></div>
+              <div class="news-desc">AI効率化の先に、対面コミュニケーションの価値が再発見されるという考察。</div>
+              <div class="news-footer"><span class="badge b-date">3/20</span></div>
+            </div>
+            <div class="news-item">
+              <div class="news-title"><a href="https://x.com/ritsuto_NFT_Vt/status/2035616920498565596" target="_blank">大阪リアル作業会報告：参加者が教え合う文化が自然発生</a></div>
+              <div class="news-desc">大盛況。東京開催も示唆。</div>
+              <div class="news-footer"><span class="badge b-date">3/22</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /account-grid -->
+    </section>
+
+    <!-- ======================================
+         ↓ 次回巡回時、ここに新しいセクションを追加
+         例:
+         <section class="date-section" id="d20260325">
+           <div class="date-heading"><h2>2026-03-25</h2></div>
+           ...
+         </section>
+         ====================================== -->
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<div class="footer">
+  AIニュース アーカイブ | 最終更新：2026-03-24 | 5アカウント監視
+</div>
+
+<script>
+  // サイドバーのアクティブ表示
+  const links = document.querySelectorAll('.date-link');
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      links.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
